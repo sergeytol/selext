@@ -9,6 +9,7 @@ import (
 	_ "github.com/andlabs/ui/winmanifest"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -121,16 +122,29 @@ func commandSum(input string) (string, error) {
 	return strconv.FormatFloat(sum, 'f', 6, 64), nil
 }
 
+func commandAsc(input string) (string, error) {
+	lines := strings.Split(input, eol)
+	sort.Strings(lines)
+	return strings.Join(lines, eol), nil
+}
+
+func commandDesc(input string) (string, error) {
+	lines := strings.Split(input, eol)
+	sort.Sort(sort.Reverse(sort.StringSlice(lines)))
+	return strings.Join(lines, eol), nil
+}
+
 func processCommands(input string, code string) (string, error) {
 	var err error
 	code, err = commandTrim(code)
 	output := input
 	codeLines := strings.Split(code, eol)
 	for _, line := range codeLines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
 		commandSlice := strings.Split(line, ",")
 		switch commandSlice[0] {
-		case "#":
-			continue
 		case "count":
 			output, err = commandCount(output)
 		case "trim":
@@ -153,6 +167,10 @@ func processCommands(input string, code string) (string, error) {
 			output, err = commandPostfix(output, strings.Trim(strings.Join(commandSlice[1:], ""), "\"'"))
 		case "sum":
 			output, err = commandSum(output)
+		case "asc":
+			output, err = commandAsc(output)
+		case "desc":
+			output, err = commandDesc(output)
 		}
 	}
 	return output, err
