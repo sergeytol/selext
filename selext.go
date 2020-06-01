@@ -62,13 +62,23 @@ func commandCount(input string) (string, error) {
 	return strconv.Itoa(len(strings.Split(input, eol))), nil
 }
 
-func commandRe(input string, regexPattern string) (string, error) {
-	r, err := regexp.Compile(regexPattern)
+func commandReg(input string, regexPattern string) (string, error) {
+	var err error
+	r, _ := regexp.Compile("\\(.+\\)")
+	if !r.MatchString(regexPattern) {
+		regexPattern = "(" + regexPattern + ")"
+	}
+
+	r, err = regexp.Compile(regexPattern)
 	if err != nil {
 		return "", errors.New("re: invalid regexp")
 	}
-	res := r.FindAllString(input, -1)
-	return strings.Join(res, eol), nil
+	res := r.FindAllStringSubmatch(input, -1)
+	var matches []string
+	for _, v := range res {
+		matches = append(matches, v[1])
+	}
+	return strings.Join(matches, eol), nil
 }
 
 func commandEmail(input string) (string, error) {
@@ -151,8 +161,8 @@ func processCommands(input string, code string) (string, error) {
 			output, err = commandTrim(output)
 		case "uniq":
 			output, err = commandUniq(output)
-		case "re":
-			output, err = commandRe(output, strings.Trim(strings.Join(commandSlice[1:], ""), "\"'"))
+		case "reg":
+			output, err = commandReg(output, strings.Trim(strings.Join(commandSlice[1:], ""), "\"'"))
 		case "email":
 			output, err = commandEmail(output)
 		case "ipv4":
